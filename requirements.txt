@@ -1,0 +1,7 @@
+stomp.py==7.0.0
+tenacity==8.0.1
+requests==2.27.1
+Flask==2.0.3
+GitPython==3.1.27
+py-healthcheck==1.10.1
+python-dotenv==0.19.2
