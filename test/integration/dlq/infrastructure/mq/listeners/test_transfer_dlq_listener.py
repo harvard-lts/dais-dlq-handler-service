@@ -31,4 +31,4 @@ class TestTransferDlqListener(StompListenerIntegrationTestBase):
         )
 
     def _get_queue_name(self) -> str:
-        return os.getenv('MQ_TRANSFER_QUEUE_TRANSFER_DLQ')
+        return os.getenv('MQ_TRANSFER_QUEUE_DLQ')

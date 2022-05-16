@@ -7,7 +7,7 @@ from app.dlq.infrastructure.mq.listeners.stomp_listener_base import StompListene
 class TransferDlqListener(StompListenerBase):
 
     def _get_queue_name(self) -> str:
-        return os.getenv('MQ_PROCESS_QUEUE_PROCESS_DLQ')
+        return os.getenv('MQ_TRANSFER_QUEUE_DLQ')
 
     def _get_mq_connection_params(self) -> MqConnectionParams:
         return MqConnectionParams(
