@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+
+  dev_hdhs:
+    container_name: "dev_hdhs"
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    env_file:
+      - .env
+    restart: on-failure
+    ports:
+      - "10580:8443"
+    volumes:
+      - ./app:/home/hdhsuser/app
+      - ./logs:/home/hdhsuser/logs
+  dev_activemq:
+    container_name: "dev_activemq"
+    build:
+      context: .
+      dockerfile: ./activemq/activemq.Dockerfile
+    restart: on-failure
+    ports:
+      - "8163:8161"
+      - "61614:61613"
+    volumes:
+      - ./activemq/data:/opt/apache-activemq/data
