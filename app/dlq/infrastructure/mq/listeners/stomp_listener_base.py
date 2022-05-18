@@ -45,6 +45,12 @@ class StompListenerBase(stomp.ConnectionListener, StompInteractor, ABC):
         self.__connection.disconnect()
 
     @abstractmethod
+    def _get_queue_name(self) -> str:
+        """
+        Retrieves the name of the queue to listen to
+        """
+
+    @abstractmethod
     def _handle_received_message(self, message_body: dict) -> None:
         """
         Handles the received message by adding child listener specific logic.
