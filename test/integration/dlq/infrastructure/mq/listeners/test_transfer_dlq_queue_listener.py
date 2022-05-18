@@ -1,21 +1,24 @@
 import os
 from unittest.mock import patch
 
-from app.dlq.infrastructure.mq.listeners.transfer_dlq_listener import TransferDlqListener
+from app.dlq.infrastructure.mq.listeners.transfer_dlq_queue_listener import TransferDlqQueueListener
 from app.dlq.infrastructure.mq.mq_connection_params import MqConnectionParams
 from test.integration.dlq.infrastructure.mq.listeners.stomp_listener_integration_test_base import \
     StompListenerIntegrationTestBase
 
 
-class TestTransferDlqListener(StompListenerIntegrationTestBase):
+class TestTransferDlqQueueListener(StompListenerIntegrationTestBase):
     def setUp(self) -> None:
         super().setUp()
-        self.sut = TransferDlqListener()
+        self.sut = TransferDlqQueueListener()
 
     def tearDown(self) -> None:
         self.sut.disconnect()
 
-    @patch("app.dlq.infrastructure.mq.listeners.transfer_dlq_listener.TransferDlqListener._handle_received_message")
+    @patch(
+        "app.dlq.infrastructure.mq.listeners.transfer_dlq_queue_listener.TransferDlqQueueListener."
+        "_handle_received_message"
+    )
     def test_on_message_happy_path(self, on_message_mock) -> None:
         self._send_test_message({})
         self._await_until_on_message_has_calls_or_timeout(on_message_mock)

@@ -4,7 +4,7 @@ from app.dlq.infrastructure.mq.mq_connection_params import MqConnectionParams
 from app.dlq.infrastructure.mq.listeners.stomp_listener_base import StompListenerBase
 
 
-class TransferDlqListener(StompListenerBase):
+class TransferDlqQueueListener(StompListenerBase):
 
     def _get_queue_name(self) -> str:
         return os.getenv('MQ_TRANSFER_QUEUE_DLQ')
@@ -19,4 +19,4 @@ class TransferDlqListener(StompListenerBase):
         )
 
     def _handle_received_message(self, message_body: dict) -> None:
-        self._logger.info("Received message from Transfer Queue. Message body: " + str(message_body))
+        self._logger.info("Received message from Transfer DLQ Queue. Message body: " + str(message_body))
