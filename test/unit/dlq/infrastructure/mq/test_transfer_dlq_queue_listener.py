@@ -7,8 +7,8 @@ from app.dlq.infrastructure.mq.publishers.transfer_resubmitting_publisher import
 
 
 @patch(
-    "app.dlq.infrastructure.mq.listeners.transfer_dlq_queue_listener.TransferDlqQueueListener"
-    "._TransferDlqQueueListener__get_mq_max_retries"
+    "app.dlq.infrastructure.mq.listeners.dlq_queue_listener_base.DlqQueueListenerBase"
+    "._DlqQueueListenerBase__get_mq_max_retries"
 )
 @patch(
     "app.dlq.infrastructure.mq.listeners.stomp_listener_base.StompListenerBase"
