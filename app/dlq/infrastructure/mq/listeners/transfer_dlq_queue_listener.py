@@ -1,6 +1,7 @@
 import os
 
 from app.containers import Listeners
+from app.dlq.infrastructure.mq.exceptions.mq_exception import MqException
 from app.dlq.infrastructure.mq.listeners.stomp_listener_base import StompListenerBase
 from app.dlq.infrastructure.mq.mq_connection_params import MqConnectionParams
 from app.dlq.infrastructure.mq.publishers.transfer_resubmitting_publisher import TransferResubmittingPublisher
@@ -42,7 +43,7 @@ class TransferDlqQueueListener(StompListenerBase):
             )
             return
 
-        retry_count = message_admin_metadata.get('current_retry_count')
+        retry_count = message_admin_metadata.get('retry_count')
         if retry_count is None:
             self._logger.info(
                 "Received message does not include current_retry_count inside admin_metadata. Ignoring message..."
@@ -57,13 +58,22 @@ class TransferDlqQueueListener(StompListenerBase):
 
         if retry_count < mq_max_retries:
             self._logger.info("Resubmitting message...")
-            self.__transfer_resubmitting_publisher.publish_message(
-                original_message_body=message_body,
-                current_retry_count=retry_count,
-                queue_name=original_queue
-            )
+            try:
+                self.__transfer_resubmitting_publisher.publish_message(
+                    original_message_body=message_body,
+                    current_retry_count=retry_count,
+                    queue_name=original_queue
+                )
+            except MqException as me:
+                self._logger.error(str(me))
+
+            self._logger.info("Message resubmitted")
+            self._logger.info("Sending notification message...")
+            # TODO: notification message
         else:
             self._logger.info("Maximum message retry count reached")
+            self._logger.info("Sending notification message...")
+            # TODO: notification message
 
     def __get_mq_max_retries(self) -> int:
         return int(os.getenv('MQ_TRANSFER_MAX_RETRIES'))

@@ -20,7 +20,7 @@ class StompPublisherBase(StompInteractor, ABC):
         :param queue_name: destination queue name
         :type queue_name: str
 
-        :raises MqMessagePublishException
+        :raises MqException
         """
         connection = self._create_mq_connection()
         try:
