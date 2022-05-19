@@ -66,6 +66,7 @@ class TransferDlqQueueListener(StompListenerBase):
                 )
             except MqException as me:
                 self._logger.error(str(me))
+                raise me
 
             self._logger.info("Message resubmitted")
             self._logger.info("Sending notification message...")
