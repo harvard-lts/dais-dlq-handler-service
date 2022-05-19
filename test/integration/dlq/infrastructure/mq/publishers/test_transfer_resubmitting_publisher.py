@@ -8,9 +8,9 @@ from test.integration.dlq.infrastructure.mq.publishers.resubmitting_publisher_in
 
 class TestTransferResubmittingPublisher(ResubmittingPublisherIntegrationTestBase):
 
-    def test_publish_message_happy_path(self) -> None:
+    def test_resubmit_message_happy_path(self) -> None:
         sut = TransferResubmittingPublisher()
-        sut.publish_message(self.TEST_ORIGINAL_MESSAGE_BODY, self.TEST_CURRENT_RETRY_COUNT, self.TEST_ORIGINAL_QUEUE)
+        sut.resubmit_message(self.TEST_ORIGINAL_MESSAGE_BODY, self.TEST_CURRENT_RETRY_COUNT, self.TEST_ORIGINAL_QUEUE)
 
         self._await_until_message_received_or_timeout()
 

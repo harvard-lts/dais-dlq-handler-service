@@ -43,7 +43,7 @@ class DlqQueueListenerBase(StompListenerBase, ABC):
         if retry_count < mq_max_retries:
             self._logger.info("Resubmitting message...")
             try:
-                self.__resubmitting_publisher.publish_message(
+                self.__resubmitting_publisher.resubmit_message(
                     original_message_body=message_body,
                     current_retry_count=retry_count,
                     queue_name=original_queue

@@ -19,10 +19,10 @@ class TestTransferResubmittingPublisher(TestCase):
         }
 
     @patch("app.dlq.infrastructure.mq.publishers.stomp_publisher_base.StompPublisherBase._publish_message")
-    def test_publish_message_happy_path(self, parent_publish_message_mock) -> None:
+    def test_resubmit_message_happy_path(self, parent_publish_message_mock) -> None:
         sut = TransferResubmittingPublisher()
 
-        sut.publish_message(
+        sut.resubmit_message(
             original_message_body=self.TEST_ORIGINAL_MESSAGE_BODY,
             current_retry_count=self.TEST_CURRENT_RETRY_COUNT,
             queue_name=self.TEST_ORIGINAL_QUEUE
