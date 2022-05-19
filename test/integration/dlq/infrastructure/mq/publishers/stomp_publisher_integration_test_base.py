@@ -40,8 +40,14 @@ class StompPublisherIntegrationTestBase(StompIntegrationTestBase, ABC):
 
         actual_body = json.loads(self.received_frame.body)
         expected_body = self._get_expected_body()
-
         self.assertDictEqual(actual_body, expected_body)
+
+        actual_expires_header = self.received_frame.headers.get('expires', None)
+        self.assertIsNotNone(actual_expires_header)
+
+        actual_persistent_header = self.received_frame.headers['persistent']
+        expected_persistent_header = "true"
+        self.assertEqual(actual_persistent_header, expected_persistent_header)
 
     @abstractmethod
     def _get_expected_body(self) -> dict:

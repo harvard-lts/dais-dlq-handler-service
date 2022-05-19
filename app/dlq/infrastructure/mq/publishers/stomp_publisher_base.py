@@ -3,6 +3,8 @@ This module defines a StompPublisherBase, which is an abstract class intended
 to define common behavior for stomp-implemented MQ publisher components.
 """
 import json
+import os
+import time
 from abc import ABC
 
 from app.dlq.infrastructure.mq.exceptions.mq_message_publish_exception import MqMessagePublishException
@@ -10,6 +12,7 @@ from app.dlq.infrastructure.mq.stomp_interactor import StompInteractor
 
 
 class StompPublisherBase(StompInteractor, ABC):
+    __DEFAULT_MESSAGE_EXPIRATION_MS = 3600000
 
     def _publish_message(self, message: dict, queue_name: str) -> None:
         """
@@ -25,7 +28,14 @@ class StompPublisherBase(StompInteractor, ABC):
         connection = self._create_mq_connection()
         try:
             message_json_str = json.dumps(message)
-            connection.send(destination=queue_name, body=message_json_str)
+            connection.send(
+                destination=queue_name,
+                body=message_json_str,
+                headers={
+                    "persistent": "true",
+                    "expires": self.__get_message_expiration_limit_ms()
+                }
+            )
         except Exception as e:
             self._logger.error(str(e))
             mq_connection_params = self._get_mq_connection_params()
@@ -38,3 +48,9 @@ class StompPublisherBase(StompInteractor, ABC):
         finally:
             self._logger.debug("Disconnecting from MQ...")
             connection.disconnect()
+
+    def __get_message_expiration_limit_ms(self) -> int:
+        now_ms = int(time.time()) * 1000
+        message_expiration_ms = int(os.getenv('MESSAGE_EXPIRATION_MS', self.__DEFAULT_MESSAGE_EXPIRATION_MS))
+        message_expiration_limit_ms = now_ms + message_expiration_ms
+        return message_expiration_limit_ms
