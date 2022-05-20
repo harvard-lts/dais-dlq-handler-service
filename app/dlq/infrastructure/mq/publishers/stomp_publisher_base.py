@@ -50,6 +50,9 @@ class StompPublisherBase(StompInteractor, ABC):
             connection.disconnect()
 
     def __get_message_expiration_limit_ms(self) -> int:
+        """
+        Returns the message expiration limit in milliseconds.
+        """
         now_ms = int(time.time()) * 1000
         message_expiration_ms = int(os.getenv('MESSAGE_EXPIRATION_MS', self.__DEFAULT_MESSAGE_EXPIRATION_MS))
         message_expiration_limit_ms = now_ms + message_expiration_ms
