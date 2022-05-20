@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch, Mock
 
-from app.dlq.infrastructure.mq.exceptions.mq_exception import MqException
+from app.common.domain.mq.exceptions.mq_exception import MqException
 from app.dlq.infrastructure.mq.listeners.transfer_dlq_queue_listener import TransferDlqQueueListener
 from app.dlq.infrastructure.mq.publishers.transfer_resubmitting_publisher import TransferResubmittingPublisher
 

@@ -1,6 +1,6 @@
 import os
 
-from app.dlq.infrastructure.mq.mq_connection_params import MqConnectionParams
+from app.common.infrastructure.mq.mq_connection_params import MqConnectionParams
 from app.dlq.infrastructure.mq.publishers.resubmitting_publisher_base import ResubmittingPublisherBase
 
 

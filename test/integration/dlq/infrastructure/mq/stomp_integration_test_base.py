@@ -3,7 +3,7 @@ from abc import abstractmethod, ABC
 
 import stomp
 
-from app.dlq.infrastructure.mq.mq_connection_params import MqConnectionParams
+from app.common.infrastructure.mq.mq_connection_params import MqConnectionParams
 from test.integration.integration_test_base import IntegrationTestBase
 
 

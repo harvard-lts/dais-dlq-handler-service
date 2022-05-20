@@ -7,8 +7,9 @@ from healthcheck import HealthCheck
 
 from app.dlq.infrastructure.mq.listeners.process_dlq_queue_listener import ProcessDlqQueueListener
 from app.dlq.infrastructure.mq.listeners.transfer_dlq_queue_listener import TransferDlqQueueListener
-from app.health.application.services.git_service import GitService
 from app.health.application.services.exceptions.get_current_commit_hash_exception import GetCurrentCommitHashException
+from app.health.application.services.git_service import GitService
+from app.health.infrastructure.compound_connectivity_service import CompoundConnectivityService
 
 LOG_FILE_DEFAULT_PATH = "/home/hdhs/logs/hdhs.log"
 LOG_FILE_DEFAULT_LEVEL = logging.DEBUG
@@ -21,10 +22,7 @@ APPLICATION_GIT_REPOSITORY = "https://github.com/harvard-lts/hdc3a-dlq-handler-s
 logger = logging.getLogger()
 
 
-def create_app(config_name: str = 'default') -> Flask:
-    if config_name != 'testing':
-        configure_logger()
-
+def create_app() -> Flask:
     setup_queue_listeners()
 
     app = Flask(__name__)
@@ -63,6 +61,9 @@ def setup_health_check(app: Flask) -> None:
         raise e
 
     add_application_section_to_health_check(current_commit_hash, health_check)
+
+    connectivity_service = CompoundConnectivityService()
+    connectivity_service.create_connectivity_check(health_check)
 
     app.add_url_rule("/health", "health", view_func=lambda: health_check.run())
 

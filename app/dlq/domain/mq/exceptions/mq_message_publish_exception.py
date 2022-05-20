@@ -1,4 +1,4 @@
-from app.dlq.infrastructure.mq.exceptions.mq_exception import MqException
+from app.common.domain.mq.exceptions.mq_exception import MqException
 
 
 class MqMessagePublishException(MqException):

@@ -1,8 +1,8 @@
 import os
 
+from app.common.infrastructure.mq.mq_connection_params import MqConnectionParams
 from app.containers import Listeners
 from app.dlq.infrastructure.mq.listeners.dlq_queue_listener_base import DlqQueueListenerBase
-from app.dlq.infrastructure.mq.mq_connection_params import MqConnectionParams
 from app.dlq.infrastructure.mq.publishers.transfer_resubmitting_publisher import TransferResubmittingPublisher
 
 

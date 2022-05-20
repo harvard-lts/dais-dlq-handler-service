@@ -7,8 +7,8 @@ import os
 import time
 from abc import ABC
 
-from app.dlq.infrastructure.mq.exceptions.mq_message_publish_exception import MqMessagePublishException
-from app.dlq.infrastructure.mq.stomp_interactor import StompInteractor
+from app.common.infrastructure.mq.stomp_interactor import StompInteractor
+from app.dlq.domain.mq.exceptions.mq_message_publish_exception import MqMessagePublishException
 
 
 class StompPublisherBase(StompInteractor, ABC):

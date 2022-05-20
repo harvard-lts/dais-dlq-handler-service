@@ -1,7 +1,7 @@
 import os
 from abc import ABC
 
-from app.dlq.infrastructure.mq.exceptions.mq_exception import MqException
+from app.common.domain.mq.exceptions.mq_exception import MqException
 from app.dlq.infrastructure.mq.listeners.stomp_listener_base import StompListenerBase
 from app.dlq.infrastructure.mq.publishers.resubmitting_publisher_base import ResubmittingPublisherBase
 
