@@ -41,24 +41,27 @@ class DlqQueueListenerBase(StompListenerBase, ABC):
         self._logger.info("Max retries permitted: {}".format(mq_max_retries))
 
         if retry_count < mq_max_retries:
-            self._logger.info("Resubmitting message...")
-            try:
-                self.__resubmitting_publisher.resubmit_message(
-                    original_message_body=message_body,
-                    current_retry_count=retry_count,
-                    queue_name=original_queue
-                )
-            except MqException as me:
-                self._logger.error(str(me))
-                raise me
-
-            self._logger.info("Message resubmitted")
-            self._logger.info("Sending notification message...")
-            # TODO: notification message
+            self.__resubmit_message(message_body, original_queue, retry_count)
         else:
             self._logger.info("Maximum message retry count reached")
             self._logger.info("Sending notification message...")
             # TODO: notification message
+
+    def __resubmit_message(self, message_body: dict, original_queue: str, retry_count: int) -> None:
+        self._logger.info("Resubmitting message...")
+        try:
+            self.__resubmitting_publisher.resubmit_message(
+                original_message_body=message_body,
+                current_retry_count=retry_count,
+                queue_name=original_queue
+            )
+        except MqException as me:
+            self._logger.error(str(me))
+            raise me
+
+        self._logger.info("Message resubmitted")
+        self._logger.info("Sending notification message...")
+        # TODO: notification message
 
     def __get_message_max_retries(self) -> int:
         return int(os.getenv('MESSAGE_MAX_RETRIES'))
