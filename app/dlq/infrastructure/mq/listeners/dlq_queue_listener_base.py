@@ -20,27 +20,14 @@ class DlqQueueListenerBase(StompListenerBase, ABC):
             self._logger.info("Received message does not include admin_metadata. Ignoring message...")
             return
 
-        original_queue = message_admin_metadata.get('original_queue')
-        if original_queue is None:
-            self._logger.info(
-                "Received message does not include original_queue inside admin_metadata. Ignoring message..."
-            )
-            return
-
-        retry_count = message_admin_metadata.get('retry_count')
-        if retry_count is None:
-            self._logger.info(
-                "Received message does not include current_retry_count inside admin_metadata. Ignoring message..."
-            )
-            return
-
-        retry_count = int(retry_count)
+        retry_count = int(message_admin_metadata['retry_count'])
         self._logger.info("Received message has {} retries".format(retry_count))
 
         mq_max_retries = self.__get_message_max_retries()
         self._logger.info("Max retries permitted: {}".format(mq_max_retries))
 
         if retry_count < mq_max_retries:
+            original_queue = message_admin_metadata['original_queue']
             self.__resubmit_message(message_body, original_queue, retry_count)
         else:
             self._logger.info("Maximum message retry count reached")
