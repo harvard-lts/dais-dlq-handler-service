@@ -15,8 +15,9 @@ services:
     volumes:
       - ./app:/home/hdhsuser/app
       - ./logs:/home/hdhsuser/logs
-  dev_activemq:
-    container_name: "dev_activemq"
+
+  dev_activemq_transfer:
+    container_name: "dev_activemq_transfer"
     build:
       context: .
       dockerfile: ./activemq/activemq.Dockerfile
@@ -25,4 +26,16 @@ services:
       - "8163:8161"
       - "61614:61613"
     volumes:
-      - ./activemq/data:/opt/apache-activemq/data
+      - ./activemq/data/transfer:/opt/apache-activemq/data
+
+  dev_activemq_process:
+    container_name: "dev_activemq_process"
+    build:
+      context: .
+      dockerfile: ./activemq/activemq.Dockerfile
+    restart: on-failure
+    ports:
+      - "8164:8161"
+      - "61615:61613"
+    volumes:
+      - ./activemq/data/process:/opt/apache-activemq/data

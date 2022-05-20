@@ -1,10 +1,18 @@
 import os
 
+from app.containers import Listeners
+from app.dlq.infrastructure.mq.listeners.dlq_queue_listener_base import DlqQueueListenerBase
 from app.dlq.infrastructure.mq.mq_connection_params import MqConnectionParams
-from app.dlq.infrastructure.mq.listeners.stomp_listener_base import StompListenerBase
+from app.dlq.infrastructure.mq.publishers.process_resubmitting_publisher import ProcessResubmittingPublisher
 
 
-class ProcessDlqQueueListener(StompListenerBase):
+class ProcessDlqQueueListener(DlqQueueListenerBase):
+
+    def __init__(
+            self,
+            process_resubmitting_publisher: ProcessResubmittingPublisher = Listeners.process_resubmitting_publisher()
+    ) -> None:
+        super().__init__(process_resubmitting_publisher)
 
     def _get_queue_name(self) -> str:
         return os.getenv('MQ_PROCESS_QUEUE_DLQ')
@@ -17,6 +25,3 @@ class ProcessDlqQueueListener(StompListenerBase):
             mq_user=os.getenv('MQ_PROCESS_USER'),
             mq_password=os.getenv('MQ_PROCESS_PASSWORD')
         )
-
-    def _handle_received_message(self, message_body: dict) -> None:
-        self._logger.info("Received message from Process DLQ Queue. Message body: " + str(message_body))

@@ -4,6 +4,7 @@ from logging.handlers import RotatingFileHandler
 
 from flask import Flask
 
+from app.dlq.infrastructure.mq.listeners.process_dlq_queue_listener import ProcessDlqQueueListener
 from app.dlq.infrastructure.mq.listeners.transfer_dlq_queue_listener import TransferDlqQueueListener
 
 LOG_FILE_DEFAULT_PATH = "/home/hdhs/logs/hdhs.log"
@@ -38,4 +39,5 @@ def configure_logger() -> None:
 
 
 def setup_queue_listeners() -> None:
+    ProcessDlqQueueListener()
     TransferDlqQueueListener()

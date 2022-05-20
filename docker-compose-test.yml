@@ -20,4 +20,4 @@ services:
       dockerfile: ./activemq/activemq.Dockerfile
     restart: on-failure
     ports:
-      - "8164:8161"
+      - "8165:8161"

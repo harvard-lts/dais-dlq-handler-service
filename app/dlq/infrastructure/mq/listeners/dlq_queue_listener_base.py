@@ -37,7 +37,7 @@ class DlqQueueListenerBase(StompListenerBase, ABC):
         retry_count = int(retry_count)
         self._logger.info("Received message has {} retries".format(retry_count))
 
-        mq_max_retries = self.__get_mq_max_retries()
+        mq_max_retries = self.__get_message_max_retries()
         self._logger.info("Max retries permitted: {}".format(mq_max_retries))
 
         if retry_count < mq_max_retries:
@@ -60,5 +60,5 @@ class DlqQueueListenerBase(StompListenerBase, ABC):
             self._logger.info("Sending notification message...")
             # TODO: notification message
 
-    def __get_mq_max_retries(self) -> int:
-        return int(os.getenv('MQ_TRANSFER_MAX_RETRIES'))
+    def __get_message_max_retries(self) -> int:
+        return int(os.getenv('MESSAGE_MAX_RETRIES'))
