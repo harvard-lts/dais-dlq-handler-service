@@ -39,6 +39,8 @@ class TestTransferDlqQueueListener(TestCase):
             "test": "test"
         }
 
+        cls.TEST_MESSAGE_ID = "test"
+
     def test_handle_received_message_max_retries_unreached_happy_path(
             self,
             create_subscribed_mq_connection_mock,
@@ -48,7 +50,7 @@ class TestTransferDlqQueueListener(TestCase):
         transfer_resubmitting_publisher_mock = Mock(spec=TransferResubmittingPublisher)
 
         sut = TransferDlqQueueListener(transfer_resubmitting_publisher=transfer_resubmitting_publisher_mock)
-        sut._handle_received_message(self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED)
+        sut._handle_received_message(self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED, self.TEST_MESSAGE_ID)
 
         transfer_resubmitting_publisher_mock.resubmit_message.assert_called_once_with(
             original_message_body=self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED,
@@ -65,7 +67,7 @@ class TestTransferDlqQueueListener(TestCase):
         transfer_resubmitting_publisher_mock = Mock(spec=TransferResubmittingPublisher)
 
         sut = TransferDlqQueueListener(transfer_resubmitting_publisher=transfer_resubmitting_publisher_mock)
-        sut._handle_received_message(self.TEST_MESSAGE_BODY_MAX_RETRIES_REACHED)
+        sut._handle_received_message(self.TEST_MESSAGE_BODY_MAX_RETRIES_REACHED, self.TEST_MESSAGE_ID)
 
         transfer_resubmitting_publisher_mock.resubmit_message.assert_not_called()
 
@@ -81,7 +83,7 @@ class TestTransferDlqQueueListener(TestCase):
         sut = TransferDlqQueueListener(transfer_resubmitting_publisher=transfer_resubmitting_publisher_stub)
 
         with self.assertRaises(MqException):
-            sut._handle_received_message(self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED)
+            sut._handle_received_message(self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED, self.TEST_MESSAGE_ID)
 
         transfer_resubmitting_publisher_stub.resubmit_message.assert_called_once_with(
             original_message_body=self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED,
@@ -98,6 +100,6 @@ class TestTransferDlqQueueListener(TestCase):
         transfer_resubmitting_publisher_mock = Mock(spec=TransferResubmittingPublisher)
 
         sut = TransferDlqQueueListener(transfer_resubmitting_publisher=transfer_resubmitting_publisher_mock)
-        sut._handle_received_message(self.TEST_MESSAGE_BODY_MISSING_ADMIN_METADATA)
+        sut._handle_received_message(self.TEST_MESSAGE_BODY_MISSING_ADMIN_METADATA, self.TEST_MESSAGE_ID)
 
         transfer_resubmitting_publisher_mock.resubmit_message.assert_not_called()

@@ -25,7 +25,7 @@ class StompListenerBase(stomp.ConnectionListener, StompInteractor, ABC):
             self._logger.error(str(e))
             raise e
 
-        self._handle_received_message(message_body)
+        self._handle_received_message(message_body, frame.headers['message-id'])
 
     def on_error(self, frame: Frame) -> None:
         self._logger.info("MQ error received: " + frame.body)
@@ -51,12 +51,14 @@ class StompListenerBase(stomp.ConnectionListener, StompInteractor, ABC):
         """
 
     @abstractmethod
-    def _handle_received_message(self, message_body: dict) -> None:
+    def _handle_received_message(self, message_body: dict, message_id: str) -> None:
         """
         Handles the received message by adding child listener specific logic.
 
         :param message_body: received message body
         :type message_body: dict
+        :param message_id: received message id
+        :type message_body: str
         """
 
     def __create_subscribed_mq_connection(self) -> stomp.Connection:
