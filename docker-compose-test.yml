@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+
+  test_runner:
+    container_name: "test_runner"
+    build:
+      context: .
+      dockerfile: ./testrunner.Dockerfile
+    tty: true
+    restart: on-failure
+    volumes:
+      - ./app:/home/hdhsuser/app
+      - ./test:/home/hdhsuser/test
+
+  test_activemq:
+    container_name: "test_activemq"
+    build:
+      context: .
+      dockerfile: ./activemq/activemq.Dockerfile
+    restart: on-failure
+    ports:
+      - "8164:8161"
