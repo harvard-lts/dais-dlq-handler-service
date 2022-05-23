@@ -5,6 +5,7 @@ from unittest.mock import patch, Mock
 from app.dlq.domain.services.dlq_service import DlqService
 from app.dlq.infrastructure.mq.exceptions.mq_exception import MqException
 from app.dlq.infrastructure.mq.publishers.transfer_resubmitting_publisher import TransferResubmittingPublisher
+from app.dlq.domain.services.exceptions.dlq_message_handling_exception import DlqMessageHandlingException
 
 
 @patch("app.dlq.domain.services.dlq_service.os.getenv")
@@ -57,7 +58,7 @@ class TestDlqService(TestCase):
 
         transfer_resubmitting_publisher_mock.resubmit_message.assert_not_called()
 
-    def test_handle_dlq_message_max_retries_unreached_transfer_resubmitting_publisher_raises_mq_exception(
+    def test_handle_dlq_message_max_retries_unreached_service_raises_dlq_message_handling_exception(
             self,
             os_getenv_mock
     ) -> None:
@@ -67,7 +68,7 @@ class TestDlqService(TestCase):
 
         sut = DlqService(resubmitting_publisher=transfer_resubmitting_publisher_stub, logger=Mock(spec=Logger))
 
-        with self.assertRaises(MqException):
+        with self.assertRaises(DlqMessageHandlingException):
             sut.handle_dlq_message(self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED, self.TEST_MESSAGE_ID)
 
         transfer_resubmitting_publisher_stub.resubmit_message.assert_called_once_with(

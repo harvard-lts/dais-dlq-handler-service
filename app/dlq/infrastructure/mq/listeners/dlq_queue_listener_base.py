@@ -1,6 +1,7 @@
 from abc import ABC
 
 from app.dlq.domain.services.dlq_service import DlqService
+from app.dlq.domain.services.exceptions.dlq_message_handling_exception import DlqMessageHandlingException
 from app.dlq.infrastructure.mq.listeners.stomp_listener_base import StompListenerBase
 
 
@@ -14,4 +15,8 @@ class DlqQueueListenerBase(StompListenerBase, ABC):
         self._logger.info(
             "Received message from DLQ Queue. Message body: {}. Message id: {}".format(str(message_body), message_id)
         )
-        self.__dlq_service.handle_dlq_message(message_body, message_id)
+        try:
+            self.__dlq_service.handle_dlq_message(message_body, message_id)
+        except DlqMessageHandlingException as dmhe:
+            self._logger.error(str(dmhe))
+            raise dmhe

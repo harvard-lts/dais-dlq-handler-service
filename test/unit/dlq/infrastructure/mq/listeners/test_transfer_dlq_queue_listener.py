@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import patch, Mock
 
 from app.dlq.domain.services.dlq_service import DlqService
+from app.dlq.domain.services.exceptions.dlq_message_handling_exception import DlqMessageHandlingException
 from app.dlq.infrastructure.mq.listeners.transfer_dlq_queue_listener import TransferDlqQueueListener
 
 
@@ -30,3 +31,15 @@ class TestTransferDlqQueueListener(TestCase):
         sut._handle_received_message(self.TEST_MESSAGE_BODY, self.TEST_MESSAGE_ID)
 
         dlq_service_mock.handle_dlq_message.assert_called_once_with(self.TEST_MESSAGE_BODY, self.TEST_MESSAGE_ID)
+
+    def test_handle_received_service_raises_dlq_message_handling_exception(
+            self,
+            create_subscribed_mq_connection_mock
+    ) -> None:
+        dlq_service_stub = Mock(spec=DlqService)
+        dlq_service_stub.handle_dlq_message.side_effect = DlqMessageHandlingException("test", "test")
+
+        sut = TransferDlqQueueListener(dlq_service=dlq_service_stub)
+
+        with self.assertRaises(DlqMessageHandlingException):
+            sut._handle_received_message(self.TEST_MESSAGE_BODY, self.TEST_MESSAGE_ID)

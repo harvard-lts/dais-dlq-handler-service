@@ -3,6 +3,7 @@ from logging import Logger
 
 from app.dlq.infrastructure.mq.exceptions.mq_exception import MqException
 from app.dlq.infrastructure.mq.publishers.resubmitting_publisher_base import ResubmittingPublisherBase
+from app.dlq.domain.services.exceptions.dlq_message_handling_exception import DlqMessageHandlingException
 
 
 class DlqService:
@@ -30,24 +31,21 @@ class DlqService:
 
         if retry_count < max_retries:
             original_queue = message_admin_metadata['original_queue']
-            self.__resubmit_message(message_body, message_id, original_queue, retry_count)
+            self.__logger.info("Resubmitting message {}...".format(message_id))
+            try:
+                self.__resubmitting_publisher.resubmit_message(
+                    original_message_body=message_body,
+                    current_retry_count=retry_count,
+                    queue_name=original_queue
+                )
+            except MqException as me:
+                self.__logger.error(str(me))
+                raise DlqMessageHandlingException(message_id, str(me))
+
+            self.__logger.info("Message {} resubmitted".format(message_id))
+            self.__logger.info("Sending notification message...")
+            # TODO: notification message
         else:
             self.__logger.info("Maximum message retry count reached for message {}".format(message_id))
             self.__logger.info("Sending notification message...")
             # TODO: notification message
-
-    def __resubmit_message(self, message_body: dict, message_id: str, original_queue: str, retry_count: int) -> None:
-        self.__logger.info("Resubmitting message {}...".format(message_id))
-        try:
-            self.__resubmitting_publisher.resubmit_message(
-                original_message_body=message_body,
-                current_retry_count=retry_count,
-                queue_name=original_queue
-            )
-        except MqException as me:
-            self.__logger.error(str(me))
-            raise me
-
-        self.__logger.info("Message {} resubmitted".format(message_id))
-        self.__logger.info("Sending notification message...")
-        # TODO: notification message
