@@ -1,25 +1,22 @@
 from unittest import TestCase
 from unittest.mock import patch, Mock
 
-from app.common.domain.mq.exceptions.mq_exception import MqException
+from stomp import Connection
+
+from app.dlq.domain.services.dlq_service import DlqService
+from app.dlq.domain.services.exceptions.dlq_service_exception import DlqServiceException
 from app.dlq.infrastructure.mq.listeners.transfer_dlq_queue_listener import TransferDlqQueueListener
-from app.dlq.infrastructure.mq.publishers.transfer_resubmitting_publisher import TransferResubmittingPublisher
 
 
-@patch(
-    "app.dlq.infrastructure.mq.listeners.dlq_queue_listener_base.DlqQueueListenerBase"
-    "._DlqQueueListenerBase__get_message_max_retries"
-)
 @patch(
     "app.dlq.infrastructure.mq.listeners.stomp_listener_base.StompListenerBase"
     "._StompListenerBase__create_subscribed_mq_connection"
 )
 class TestTransferDlqQueueListener(TestCase):
+
     @classmethod
     def setUpClass(cls) -> None:
-        cls.TEST_MESSAGE_MAX_RETRIES = 3
-
-        cls.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED = {
+        cls.TEST_MESSAGE_BODY = {
             "test": "test",
             "admin_metadata": {
                 "original_queue": "test_queue",
@@ -27,104 +24,34 @@ class TestTransferDlqQueueListener(TestCase):
             }
         }
 
-        cls.TEST_MESSAGE_BODY_MISSING_ADMIN_METADATA = {
-            "test": "test"
-        }
+        cls.TEST_MESSAGE_ID = "test"
 
-        cls.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED_MISSING_ORIGINAL_QUEUE = {
-            "test": "test",
-            "admin_metadata": {
-                "retry_count": 2
-            }
-        }
+        cls.TEST_MESSAGE_SUBSCRIPTION = "test"
 
-        cls.TEST_MESSAGE_BODY_MISSING_RETRY_COUNT = {
-            "test": "test",
-            "admin_metadata": {
-                "original_queue": "test_queue",
-            }
-        }
+    def setUp(self) -> None:
+        self.connection_mock = Mock(spec=Connection)
 
-        cls.TEST_MESSAGE_BODY_MAX_RETRIES_REACHED = {
-            "test": "test",
-            "admin_metadata": {
-                "original_queue": "test_queue",
-                "retry_count": cls.TEST_MESSAGE_MAX_RETRIES
-            }
-        }
+    def test_handle_received_message_happy_path(self, create_subscribed_mq_connection_mock) -> None:
+        create_subscribed_mq_connection_mock.return_value = self.connection_mock
+        dlq_service_mock = Mock(spec=DlqService)
 
-    def test_handle_received_message_max_retries_unreached_happy_path(
-            self,
-            create_subscribed_mq_connection_mock,
-            get_mq_max_retries_mock
-    ) -> None:
-        get_mq_max_retries_mock.return_value = self.TEST_MESSAGE_MAX_RETRIES
-        transfer_resubmitting_publisher_mock = Mock(spec=TransferResubmittingPublisher)
+        sut = TransferDlqQueueListener(dlq_service=dlq_service_mock)
 
-        sut = TransferDlqQueueListener(transfer_resubmitting_publisher=transfer_resubmitting_publisher_mock)
-        sut._handle_received_message(self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED)
+        sut._handle_received_message(self.TEST_MESSAGE_BODY, self.TEST_MESSAGE_ID, self.TEST_MESSAGE_SUBSCRIPTION)
 
-        transfer_resubmitting_publisher_mock.resubmit_message.assert_called_once_with(
-            original_message_body=self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED,
-            current_retry_count=self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED["admin_metadata"]["retry_count"],
-            queue_name=self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED["admin_metadata"]["original_queue"]
+        dlq_service_mock.handle_dlq_message.assert_called_once_with(self.TEST_MESSAGE_BODY, self.TEST_MESSAGE_ID)
+        self.connection_mock.ack.assert_called_once_with(
+            id=self.TEST_MESSAGE_ID,
+            subscription=self.TEST_MESSAGE_SUBSCRIPTION
         )
 
-    def test_handle_received_message_max_retries_unreached_transfer_resubmitting_publisher_raises_mq_exception(
-            self,
-            create_subscribed_mq_connection_mock,
-            get_mq_max_retries_mock
-    ) -> None:
-        get_mq_max_retries_mock.return_value = self.TEST_MESSAGE_MAX_RETRIES
-        transfer_resubmitting_publisher_stub = Mock(spec=TransferResubmittingPublisher)
-        transfer_resubmitting_publisher_stub.resubmit_message.side_effect = MqException()
+    def test_handle_received_service_raises_dlq_service_exception(self, create_subscribed_mq_connection_mock) -> None:
+        create_subscribed_mq_connection_mock.return_value = self.connection_mock
+        dlq_service_stub = Mock(spec=DlqService)
+        dlq_service_stub.handle_dlq_message.side_effect = DlqServiceException("test", "test")
 
-        sut = TransferDlqQueueListener(transfer_resubmitting_publisher=transfer_resubmitting_publisher_stub)
+        sut = TransferDlqQueueListener(dlq_service=dlq_service_stub)
 
-        with self.assertRaises(MqException):
-            sut._handle_received_message(self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED)
+        sut._handle_received_message(self.TEST_MESSAGE_BODY, self.TEST_MESSAGE_ID, self.TEST_MESSAGE_SUBSCRIPTION)
 
-        transfer_resubmitting_publisher_stub.resubmit_message.assert_called_once_with(
-            original_message_body=self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED,
-            current_retry_count=self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED["admin_metadata"]["retry_count"],
-            queue_name=self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED["admin_metadata"]["original_queue"]
-        )
-
-    def test_handle_received_message_max_retries_unreached_missing_original_queue(
-            self,
-            create_subscribed_mq_connection_mock,
-            get_mq_max_retries_mock
-    ) -> None:
-        get_mq_max_retries_mock.return_value = self.TEST_MESSAGE_MAX_RETRIES
-        transfer_resubmitting_publisher_mock = Mock(spec=TransferResubmittingPublisher)
-
-        sut = TransferDlqQueueListener(transfer_resubmitting_publisher=transfer_resubmitting_publisher_mock)
-        sut._handle_received_message(self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED_MISSING_ORIGINAL_QUEUE)
-
-        transfer_resubmitting_publisher_mock.resubmit_message.assert_not_called()
-
-    def test_handle_received_message_missing_retry_count(
-            self,
-            create_subscribed_mq_connection_mock,
-            get_mq_max_retries_mock
-    ) -> None:
-        get_mq_max_retries_mock.return_value = self.TEST_MESSAGE_MAX_RETRIES
-        transfer_resubmitting_publisher_mock = Mock(spec=TransferResubmittingPublisher)
-
-        sut = TransferDlqQueueListener(transfer_resubmitting_publisher=transfer_resubmitting_publisher_mock)
-        sut._handle_received_message(self.TEST_MESSAGE_BODY_MISSING_RETRY_COUNT)
-
-        transfer_resubmitting_publisher_mock.resubmit_message.assert_not_called()
-
-    def test_handle_received_message_max_retries_reached_happy_path(
-            self,
-            create_subscribed_mq_connection_mock,
-            get_mq_max_retries_mock
-    ) -> None:
-        get_mq_max_retries_mock.return_value = self.TEST_MESSAGE_MAX_RETRIES
-        transfer_resubmitting_publisher_mock = Mock(spec=TransferResubmittingPublisher)
-
-        sut = TransferDlqQueueListener(transfer_resubmitting_publisher=transfer_resubmitting_publisher_mock)
-        sut._handle_received_message(self.TEST_MESSAGE_BODY_MAX_RETRIES_REACHED)
-
-        transfer_resubmitting_publisher_mock.resubmit_message.assert_not_called()
+        self.connection_mock.ack.assert_not_called()

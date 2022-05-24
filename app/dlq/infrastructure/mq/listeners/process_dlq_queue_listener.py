@@ -2,17 +2,14 @@ import os
 
 from app.common.infrastructure.mq.mq_connection_params import MqConnectionParams
 from app.containers import Listeners
+from app.dlq.domain.services.dlq_service import DlqService
 from app.dlq.infrastructure.mq.listeners.dlq_queue_listener_base import DlqQueueListenerBase
-from app.dlq.infrastructure.mq.publishers.process_resubmitting_publisher import ProcessResubmittingPublisher
 
 
 class ProcessDlqQueueListener(DlqQueueListenerBase):
 
-    def __init__(
-            self,
-            process_resubmitting_publisher: ProcessResubmittingPublisher = Listeners.process_resubmitting_publisher()
-    ) -> None:
-        super().__init__(process_resubmitting_publisher)
+    def __init__(self, dlq_service: DlqService = Listeners.process_dlq_service()) -> None:
+        super().__init__(dlq_service)
 
     def _get_queue_name(self) -> str:
         return os.getenv('MQ_PROCESS_QUEUE_DLQ')
