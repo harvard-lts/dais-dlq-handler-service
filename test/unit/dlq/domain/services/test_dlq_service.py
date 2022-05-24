@@ -3,9 +3,11 @@ from unittest import TestCase
 from unittest.mock import patch, Mock
 
 from app.dlq.domain.services.dlq_service import DlqService
+from app.dlq.domain.services.exceptions.dlq_message_missing_admin_metadata_exception import \
+    DlqMessageMissingAdminMetadataException
+from app.dlq.domain.services.exceptions.dlq_message_resubmitting_exception import DlqMessageResubmittingException
 from app.dlq.infrastructure.mq.exceptions.mq_exception import MqException
 from app.dlq.infrastructure.mq.publishers.transfer_resubmitting_publisher import TransferResubmittingPublisher
-from app.dlq.domain.services.exceptions.dlq_message_handling_exception import DlqMessageHandlingException
 
 
 @patch("app.dlq.domain.services.dlq_service.os.getenv")
@@ -58,7 +60,7 @@ class TestDlqService(TestCase):
 
         transfer_resubmitting_publisher_mock.resubmit_message.assert_not_called()
 
-    def test_handle_dlq_message_max_retries_unreached_service_raises_dlq_message_handling_exception(
+    def test_handle_dlq_message_max_retries_unreached_service_raises_dlq_message_resubmitting_exception(
             self,
             os_getenv_mock
     ) -> None:
@@ -68,7 +70,7 @@ class TestDlqService(TestCase):
 
         sut = DlqService(resubmitting_publisher=transfer_resubmitting_publisher_stub, logger=Mock(spec=Logger))
 
-        with self.assertRaises(DlqMessageHandlingException):
+        with self.assertRaises(DlqMessageResubmittingException):
             sut.handle_dlq_message(self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED, self.TEST_MESSAGE_ID)
 
         transfer_resubmitting_publisher_stub.resubmit_message.assert_called_once_with(
@@ -77,11 +79,16 @@ class TestDlqService(TestCase):
             queue_name=self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED["admin_metadata"]["original_queue"]
         )
 
-    def test_handle_dlq_message_max_retries_unreached_missing_admin_metadata(self, os_getenv_mock) -> None:
+    def test_handle_dlq_message_missing_admin_metadata_service_raises_dlq_message_missing_admin_metadata_exception(
+            self,
+            os_getenv_mock
+    ) -> None:
         os_getenv_mock.return_value = self.TEST_MESSAGE_MAX_RETRIES
         transfer_resubmitting_publisher_mock = Mock(spec=TransferResubmittingPublisher)
 
         sut = DlqService(resubmitting_publisher=transfer_resubmitting_publisher_mock, logger=Mock(spec=Logger))
-        sut.handle_dlq_message(self.TEST_MESSAGE_BODY_MISSING_ADMIN_METADATA, self.TEST_MESSAGE_ID)
+
+        with self.assertRaises(DlqMessageMissingAdminMetadataException):
+            sut.handle_dlq_message(self.TEST_MESSAGE_BODY_MISSING_ADMIN_METADATA, self.TEST_MESSAGE_ID)
 
         transfer_resubmitting_publisher_mock.resubmit_message.assert_not_called()

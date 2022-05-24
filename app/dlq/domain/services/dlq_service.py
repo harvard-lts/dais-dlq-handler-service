@@ -1,9 +1,11 @@
 import os
 from logging import Logger
 
+from app.dlq.domain.services.exceptions.dlq_message_missing_admin_metadata_exception import \
+    DlqMessageMissingAdminMetadataException
+from app.dlq.domain.services.exceptions.dlq_message_resubmitting_exception import DlqMessageResubmittingException
 from app.dlq.infrastructure.mq.exceptions.mq_exception import MqException
 from app.dlq.infrastructure.mq.publishers.resubmitting_publisher_base import ResubmittingPublisherBase
-from app.dlq.domain.services.exceptions.dlq_message_handling_exception import DlqMessageHandlingException
 
 
 class DlqService:
@@ -19,10 +21,10 @@ class DlqService:
     def handle_dlq_message(self, message_body: dict, message_id: str) -> None:
         message_admin_metadata = message_body.get('admin_metadata')
         if message_admin_metadata is None:
-            self.__logger.info(
-                "Received message {} does not include admin_metadata. Ignoring message...".format(message_id)
+            self.__logger.error(
+                "Received message {} does not include admin_metadata.".format(message_id)
             )
-            return
+            raise DlqMessageMissingAdminMetadataException(message_id)
 
         retry_count = int(message_admin_metadata['retry_count'])
         self.__logger.info("Received message {} has {} retries".format(message_id, retry_count))
@@ -40,7 +42,7 @@ class DlqService:
                 )
             except MqException as me:
                 self.__logger.error(str(me))
-                raise DlqMessageHandlingException(message_id, str(me))
+                raise DlqMessageResubmittingException(message_id, str(me))
 
             self.__logger.info("Message {} resubmitted".format(message_id))
             self.__logger.info("Sending notification message...")

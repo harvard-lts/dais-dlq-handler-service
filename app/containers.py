@@ -12,12 +12,12 @@ class Listeners(containers.DeclarativeContainer):
 
     process_dlq_service = providers.Factory(
         DlqService,
-        resubmitting_publisher=ProcessResubmittingPublisher,
-        logger=logging.getLogger()
+        resubmitting_publisher=ProcessResubmittingPublisher(),
+        logger=logger
     )
 
     transfer_dlq_service = providers.Factory(
         DlqService,
-        resubmitting_publisher=TransferResubmittingPublisher,
+        resubmitting_publisher=TransferResubmittingPublisher(),
         logger=logger
     )
