@@ -1,3 +1,7 @@
+"""
+This module defines a DlqService, which is a domain service that defines DLQ operations.
+"""
+
 import os
 from logging import Logger
 
@@ -19,6 +23,16 @@ class DlqService:
         self.__logger = logger
 
     def handle_dlq_message(self, message_body: dict, message_id: str) -> None:
+        """
+        Handles a DLQ message.
+
+        :param message_body: message body
+        :type message_body: dict
+        :param message_id: message id
+        :type message_id: str
+
+        :raises DlqServiceException
+        """
         message_admin_metadata = message_body.get('admin_metadata')
         if message_admin_metadata is None:
             self.__logger.error(
