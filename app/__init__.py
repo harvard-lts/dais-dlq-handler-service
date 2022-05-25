@@ -2,7 +2,7 @@ import logging
 import os
 from logging.handlers import RotatingFileHandler
 
-from flask import Flask
+from flask import Flask, Response
 from healthcheck import HealthCheck
 
 from app.dlq.infrastructure.mq.listeners.process_dlq_queue_listener import ProcessDlqQueueListener
@@ -23,10 +23,12 @@ logger = logging.getLogger()
 
 
 def create_app() -> Flask:
+    configure_logger()
     setup_queue_listeners()
 
     app = Flask(__name__)
     setup_health_check(app)
+    disable_cached_responses(app)
 
     return app
 
@@ -79,3 +81,13 @@ def add_application_section_to_health_check(current_commit_hash: str, health_che
             }
         }
     )
+
+
+def disable_cached_responses(app: Flask) -> None:
+    @app.after_request
+    def add_response_headers(response: Response) -> Response:
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        response.headers['Cache-Control'] = 'public, max-age=0'
+        return response
