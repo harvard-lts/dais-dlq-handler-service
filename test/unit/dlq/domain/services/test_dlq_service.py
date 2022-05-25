@@ -4,8 +4,7 @@ from unittest.mock import patch, Mock
 
 from app.common.domain.mq.exceptions.mq_exception import MqException
 from app.dlq.domain.services.dlq_service import DlqService
-from app.dlq.domain.services.exceptions.dlq_message_missing_admin_metadata_exception import \
-    DlqMessageMissingAdminMetadataException
+from app.dlq.domain.services.exceptions.dlq_message_missing_field_exception import DlqMessageMissingFieldException
 from app.dlq.domain.services.exceptions.dlq_message_resubmitting_exception import DlqMessageResubmittingException
 from app.dlq.infrastructure.mq.publishers.transfer_resubmitting_publisher import TransferResubmittingPublisher
 
@@ -79,7 +78,7 @@ class TestDlqService(TestCase):
             queue_name=self.TEST_MESSAGE_BODY_MAX_RETRIES_UNREACHED["admin_metadata"]["original_queue"]
         )
 
-    def test_handle_dlq_message_missing_admin_metadata_service_raises_dlq_message_missing_admin_metadata_exception(
+    def test_handle_dlq_message_missing_admin_metadata_service_raises_dlq_message_missing_field_exception(
             self,
             os_getenv_mock
     ) -> None:
@@ -88,7 +87,7 @@ class TestDlqService(TestCase):
 
         sut = DlqService(resubmitting_publisher=transfer_resubmitting_publisher_mock, logger=Mock(spec=Logger))
 
-        with self.assertRaises(DlqMessageMissingAdminMetadataException):
+        with self.assertRaises(DlqMessageMissingFieldException):
             sut.handle_dlq_message(self.TEST_MESSAGE_BODY_MISSING_ADMIN_METADATA, self.TEST_MESSAGE_ID)
 
         transfer_resubmitting_publisher_mock.resubmit_message.assert_not_called()

@@ -6,13 +6,13 @@ import os
 from logging import Logger
 
 from app.common.domain.mq.exceptions.mq_exception import MqException
-from app.dlq.domain.services.exceptions.dlq_message_missing_admin_metadata_exception import \
-    DlqMessageMissingAdminMetadataException
+from app.dlq.domain.services.exceptions.dlq_message_missing_field_exception import DlqMessageMissingFieldException
 from app.dlq.domain.services.exceptions.dlq_message_resubmitting_exception import DlqMessageResubmittingException
 from app.dlq.infrastructure.mq.publishers.resubmitting_publisher_base import ResubmittingPublisherBase
 
 
 class DlqService:
+    __DEFAULT_MESSAGE_MAX_RETRIES = 3
 
     def __init__(
             self,
@@ -33,20 +33,18 @@ class DlqService:
 
         :raises DlqServiceException
         """
-        message_admin_metadata = message_body.get('admin_metadata')
-        if message_admin_metadata is None:
-            self.__logger.error(
-                "Received message {} does not include admin_metadata.".format(message_id)
-            )
-            raise DlqMessageMissingAdminMetadataException(message_id)
+        try:
+            message_admin_metadata = message_body['admin_metadata']
+            original_queue = message_admin_metadata['original_queue']
+            retry_count = int(message_admin_metadata['retry_count'])
+        except KeyError as e:
+            raise DlqMessageMissingFieldException(message_id, str(e))
 
-        retry_count = int(message_admin_metadata['retry_count'])
         self.__logger.info("Received message {} has {} retries".format(message_id, retry_count))
-        max_retries = int(os.getenv('MESSAGE_MAX_RETRIES'))
+        max_retries = int(os.getenv('MESSAGE_MAX_RETRIES', self.__DEFAULT_MESSAGE_MAX_RETRIES))
         self.__logger.info("Max retries permitted: {}".format(max_retries))
 
         if retry_count < max_retries:
-            original_queue = message_admin_metadata['original_queue']
             self.__logger.info("Resubmitting message {}...".format(message_id))
             try:
                 self.__resubmitting_publisher.resubmit_message(
