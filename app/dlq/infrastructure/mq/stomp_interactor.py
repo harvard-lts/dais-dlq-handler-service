@@ -76,9 +76,3 @@ class StompInteractor(ABC):
         """
         Retrieves the MQ connection params necessary for creating the connection
         """
-
-    @abstractmethod
-    def _get_queue_name(self) -> str:
-        """
-        Retrieves the name of the queue to be interacted with
-        """
