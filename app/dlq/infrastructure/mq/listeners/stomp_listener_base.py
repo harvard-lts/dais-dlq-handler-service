@@ -24,7 +24,7 @@ class StompListenerBase(stomp.ConnectionListener, StompInteractor, ABC):
             message_body = json.loads(frame.body)
         except json.decoder.JSONDecodeError as e:
             self._logger.error(str(e))
-            raise e
+            return
 
         self._handle_received_message(message_body, frame.headers['message-id'], frame.headers['subscription'])
 
