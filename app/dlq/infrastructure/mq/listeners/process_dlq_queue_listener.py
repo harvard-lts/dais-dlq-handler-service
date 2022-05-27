@@ -1,9 +1,9 @@
 import os
 
+from app.common.infrastructure.mq.mq_connection_params import MqConnectionParams
 from app.containers import Listeners
 from app.dlq.domain.services.dlq_service import DlqService
 from app.dlq.infrastructure.mq.listeners.dlq_queue_listener_base import DlqQueueListenerBase
-from app.dlq.infrastructure.mq.mq_connection_params import MqConnectionParams
 
 
 class ProcessDlqQueueListener(DlqQueueListenerBase):

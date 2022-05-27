@@ -8,7 +8,7 @@ from abc import abstractmethod, ABC
 import stomp
 from stomp.utils import Frame
 
-from app.dlq.infrastructure.mq.stomp_interactor import StompInteractor
+from app.common.infrastructure.mq.stomp_interactor import StompInteractor
 
 
 class StompListenerBase(stomp.ConnectionListener, StompInteractor, ABC):
@@ -24,7 +24,7 @@ class StompListenerBase(stomp.ConnectionListener, StompInteractor, ABC):
             message_body = json.loads(frame.body)
         except json.decoder.JSONDecodeError as e:
             self._logger.error(str(e))
-            raise e
+            return
 
         self._handle_received_message(message_body, frame.headers['message-id'], frame.headers['subscription'])
 

@@ -7,8 +7,8 @@ import os
 import time
 from abc import ABC
 
-from app.dlq.infrastructure.mq.exceptions.mq_message_publish_exception import MqMessagePublishException
-from app.dlq.infrastructure.mq.stomp_interactor import StompInteractor
+from app.common.infrastructure.mq.stomp_interactor import StompInteractor
+from app.dlq.domain.mq.exceptions.mq_message_publish_exception import MqMessagePublishException
 
 
 class StompPublisherBase(StompInteractor, ABC):
@@ -50,6 +50,9 @@ class StompPublisherBase(StompInteractor, ABC):
             connection.disconnect()
 
     def __get_message_expiration_limit_ms(self) -> int:
+        """
+        Returns the message expiration limit in milliseconds.
+        """
         now_ms = int(time.time()) * 1000
         message_expiration_ms = int(os.getenv('MESSAGE_EXPIRATION_MS', self.__DEFAULT_MESSAGE_EXPIRATION_MS))
         message_expiration_limit_ms = now_ms + message_expiration_ms

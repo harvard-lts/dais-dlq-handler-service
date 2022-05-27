@@ -1,8 +1,8 @@
 import os
 from unittest.mock import patch
 
+from app.common.infrastructure.mq.mq_connection_params import MqConnectionParams
 from app.dlq.infrastructure.mq.listeners.process_dlq_queue_listener import ProcessDlqQueueListener
-from app.dlq.infrastructure.mq.mq_connection_params import MqConnectionParams
 from test.integration.dlq.infrastructure.mq.listeners.stomp_listener_integration_test_base import \
     StompListenerIntegrationTestBase
 

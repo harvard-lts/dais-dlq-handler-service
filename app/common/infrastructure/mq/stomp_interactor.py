@@ -8,8 +8,8 @@ from abc import ABC, abstractmethod
 import stomp
 from tenacity import stop_after_attempt, retry_if_exception_type, retry, before_log
 
-from app.dlq.infrastructure.mq.exceptions.mq_connection_exception import MqConnectionException
-from app.dlq.infrastructure.mq.mq_connection_params import MqConnectionParams
+from app.common.domain.mq.exceptions.mq_connection_exception import MqConnectionException
+from app.common.infrastructure.mq.mq_connection_params import MqConnectionParams
 
 
 class StompInteractor(ABC):
