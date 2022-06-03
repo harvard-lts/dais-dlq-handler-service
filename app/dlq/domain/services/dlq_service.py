@@ -28,7 +28,6 @@ class DlqService:
         self.__resubmitting_publisher = resubmitting_publisher
         self.__mailing_service = mailing_service
         self.__logger = logger
-        self.__dlq_email_factory = DlqEmailFactory()
 
     def handle_dlq_message(self, message_body: dict, message_id: str) -> None:
         """
@@ -46,74 +45,50 @@ class DlqService:
             original_queue = message_admin_metadata['original_queue']
             retry_count = int(message_admin_metadata['retry_count'])
         except KeyError as e:
-            self.__send_missing_message_fields_email_notification(message_id)
+            self.__logger.info("Sending 'missing message required fields' notification email...")
+            self.__send_dlq_email(DlqEmailReason.MISSING_MESSAGE_REQUIRED_FIELDS, message_id)
             raise DlqMessageMissingFieldException(message_id, str(e))
 
         self.__logger.info("Received message {} has {} retries".format(message_id, retry_count))
-        max_retries = int(os.getenv('MESSAGE_MAX_RETRIES', self.__DEFAULT_MESSAGE_MAX_RETRIES))
-        self.__logger.info("Max retries permitted: {}".format(max_retries))
+        max_retries = self.__get_message_max_retries()
+        self.__logger.info("Message max retries permitted: {}".format(max_retries))
 
         if retry_count < max_retries:
-            self.__logger.info("Resubmitting message {}...".format(message_id))
-            try:
-                self.__resubmitting_publisher.resubmit_message(
-                    original_message_body=message_body,
-                    current_retry_count=retry_count,
-                    queue_name=original_queue
-                )
-            except MqException as me:
-                self.__logger.error(str(me))
-                self.__logger.info("Error when resubmitting DLQ message with id {}...".format(message_id))
-                self.__send_resubmit_error_email_notification(message_id)
-                raise DlqMessageResubmittingException(message_id, str(me))
-
+            self.__resubmit_message(message_body, message_id, original_queue, retry_count)
             self.__logger.info("Message {} resubmitted".format(message_id))
-            self.__send_message_resubmitted_email_notification(message_id)
+            self.__logger.info("Sending 'message resubmitted' notification email...")
+            self.__send_dlq_email(DlqEmailReason.MESSAGE_RESUBMITTED, message_id)
         else:
             self.__logger.info("Maximum message retry count reached for message {}".format(message_id))
-            self.__send_max_retries_reached_email_notification(message_id)
+            self.__logger.info("Sending 'max retries reached' notification email...")
+            self.__send_dlq_email(DlqEmailReason.MAX_RETRIES_REACHED, message_id)
 
-    def __send_missing_message_fields_email_notification(self, message_id: str) -> None:
-        self.__logger.info("Sending 'missing message required fields' notification email...")
-        missing_message_required_fields_email = self.__dlq_email_factory.get_dlq_email(
-            DlqEmailReason.MISSING_MESSAGE_REQUIRED_FIELDS,
+    def __get_message_max_retries(self) -> int:
+        return int(os.getenv('MESSAGE_MAX_RETRIES', self.__DEFAULT_MESSAGE_MAX_RETRIES))
+
+    def __resubmit_message(self, message_body: dict, message_id: str, original_queue: str, retry_count: int) -> None:
+        self.__logger.info("Resubmitting message {}...".format(message_id))
+        try:
+            self.__resubmitting_publisher.resubmit_message(
+                original_message_body=message_body,
+                current_retry_count=retry_count,
+                queue_name=original_queue
+            )
+        except MqException as me:
+            self.__logger.error(str(me))
+            self.__logger.info("Error when resubmitting DLQ message with id {}...".format(message_id))
+            self.__logger.info("Sending 'resubmit error' notification email...")
+            self.__send_dlq_email(DlqEmailReason.RESUBMIT_ERROR, message_id)
+            raise DlqMessageResubmittingException(message_id, str(me))
+
+    def __send_dlq_email(self, dlq_email_reason: DlqEmailReason, message_id: str) -> None:
+        dlq_email_factory = DlqEmailFactory()
+        dlq_email = dlq_email_factory.get_dlq_email(
+            dlq_email_reason,
             message_id
         )
         try:
-            self.__mailing_service.send_email(missing_message_required_fields_email)
-        except MailingException as me:
-            self.__logger.error(str(me))
-            raise DlqEmailNotificationException(message_id, str(me))
-
-    def __send_resubmit_error_email_notification(self, message_id: str) -> None:
-        self.__logger.info("Sending 'resubmit error' notification email...")
-        resubmit_error_email = self.__dlq_email_factory.get_dlq_email(DlqEmailReason.RESUBMIT_ERROR, message_id)
-        try:
-            self.__mailing_service.send_email(resubmit_error_email)
-        except MailingException as me:
-            self.__logger.error(str(me))
-            raise DlqEmailNotificationException(message_id, str(me))
-
-    def __send_message_resubmitted_email_notification(self, message_id: str) -> None:
-        self.__logger.info("Sending 'message resubmitted' notification email...")
-        message_resubmitted_email = self.__dlq_email_factory.get_dlq_email(
-            DlqEmailReason.MESSAGE_RESUBMITTED,
-            message_id
-        )
-        try:
-            self.__mailing_service.send_email(message_resubmitted_email)
-        except MailingException as me:
-            self.__logger.error(str(me))
-            raise DlqEmailNotificationException(message_id, str(me))
-
-    def __send_max_retries_reached_email_notification(self, message_id: str) -> None:
-        self.__logger.info("Sending 'max retries reached' notification email...")
-        max_retries_reached_email = self.__dlq_email_factory.get_dlq_email(
-            DlqEmailReason.MAX_RETRIES_REACHED,
-            message_id
-        )
-        try:
-            self.__mailing_service.send_email(max_retries_reached_email)
+            self.__mailing_service.send_email(dlq_email)
         except MailingException as me:
             self.__logger.error(str(me))
             raise DlqEmailNotificationException(message_id, str(me))
