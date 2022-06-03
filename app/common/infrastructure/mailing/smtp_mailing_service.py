@@ -10,7 +10,6 @@ from app.common.domain.mailing.exceptions.email_sending_exception import EmailSe
 from app.common.domain.mailing.mailing_service import IMailingService
 
 
-# TODO: Integration test
 class SmtpMailingService(IMailingService):
     __SMTP_SEND_MESSAGE_MAX_RETRIES = 2
 
