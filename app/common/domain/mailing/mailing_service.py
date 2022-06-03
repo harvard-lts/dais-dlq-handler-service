@@ -13,7 +13,7 @@ class IMailingService(ABC):
     @abstractmethod
     def send_email(self, email: Email) -> None:
         """
-        Sends an email given an email subject and an email body.
+        Sends an email.
 
         :param email: Email to send
         :type email: Email
