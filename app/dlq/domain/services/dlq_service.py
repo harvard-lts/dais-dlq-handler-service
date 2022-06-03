@@ -46,6 +46,7 @@ class DlqService:
             original_queue = message_admin_metadata['original_queue']
             retry_count = int(message_admin_metadata['retry_count'])
         except KeyError as e:
+            self.__send_missing_message_fields_email_notification(message_id)
             raise DlqMessageMissingFieldException(message_id, str(e))
 
         self.__logger.info("Received message {} has {} retries".format(message_id, retry_count))
@@ -71,6 +72,18 @@ class DlqService:
         else:
             self.__logger.info("Maximum message retry count reached for message {}".format(message_id))
             self.__send_max_retries_reached_email_notification(message_id)
+
+    def __send_missing_message_fields_email_notification(self, message_id: str) -> None:
+        self.__logger.info("Sending 'missing message required fields' notification email...")
+        missing_message_required_fields_email = self.__dlq_email_factory.get_dlq_email(
+            DlqEmailReason.MISSING_MESSAGE_REQUIRED_FIELDS,
+            message_id
+        )
+        try:
+            self.__mailing_service.send_email(missing_message_required_fields_email)
+        except MailingException as me:
+            self.__logger.error(str(me))
+            raise DlqEmailNotificationException(message_id, str(me))
 
     def __send_resubmit_error_email_notification(self, message_id: str) -> None:
         self.__logger.info("Sending 'resubmit error' notification email...")

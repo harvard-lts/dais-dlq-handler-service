@@ -7,6 +7,7 @@ from app.common.domain.mailing.mailing_service import IMailingService
 from app.common.domain.mq.exceptions.mq_exception import MqException
 from app.dlq.domain.models.dlq_email_message_max_retries_reached import DlqEmailMaxRetriesReached
 from app.dlq.domain.models.dlq_email_message_resubmitted import DlqEmailMessageResubmitted
+from app.dlq.domain.models.dlq_email_missing_message_required_fields import DlqEmailMissingMessageRequiredFields
 from app.dlq.domain.models.dlq_email_resubmit_error import DlqEmailResubmitError
 from app.dlq.domain.services.dlq_service import DlqService
 from app.dlq.domain.services.exceptions.dlq_email_notification_exception import DlqEmailNotificationException
@@ -137,7 +138,7 @@ class TestDlqService(TestCase):
         )
         self.assertIsInstance(mailing_service_mock.send_email.call_args.args[0], DlqEmailResubmitError)
 
-    def test_handle_dlq_message_max_retries_unreached_publisher_and_email_service_raise_exception(
+    def test_handle_dlq_message_max_retries_unreached_publisher_and_mailing_service_raise_exception(
             self,
             os_getenv_mock
     ) -> None:
@@ -163,13 +164,14 @@ class TestDlqService(TestCase):
         )
         self.assertIsInstance(mailing_service_stub.send_email.call_args.args[0], DlqEmailResubmitError)
 
-    def test_handle_dlq_message_missing_message_field(self, os_getenv_mock) -> None:
+    def test_handle_dlq_message_missing_message_fields(self, os_getenv_mock) -> None:
         os_getenv_mock.return_value = self.TEST_MESSAGE_MAX_RETRIES
         transfer_resubmitting_publisher_mock = Mock(spec=TransferResubmittingPublisher)
+        mailing_service_mock = Mock(spec=IMailingService)
 
         sut = DlqService(
             resubmitting_publisher=transfer_resubmitting_publisher_mock,
-            mailing_service=Mock(spec=IMailingService),
+            mailing_service=mailing_service_mock,
             logger=Mock(spec=Logger)
         )
 
@@ -177,3 +179,4 @@ class TestDlqService(TestCase):
             sut.handle_dlq_message(self.TEST_MESSAGE_BODY_MISSING_ADMIN_METADATA, self.TEST_MESSAGE_ID)
 
         transfer_resubmitting_publisher_mock.resubmit_message.assert_not_called()
+        self.assertIsInstance(mailing_service_mock.send_email.call_args.args[0], DlqEmailMissingMessageRequiredFields)
