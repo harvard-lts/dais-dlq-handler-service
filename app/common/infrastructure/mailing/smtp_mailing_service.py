@@ -51,6 +51,7 @@ class SmtpMailingService(IMailingService):
     def __send_smtp_message(self, message: EmailMessage) -> None:
         email_host = os.getenv("EMAIL_HOST")
         email_port = os.getenv("EMAIL_PORT")
+
         self.__logger.info(
             "Sending email with subject {} to host {}, port {}, via SMTP...".format(
                 message['Subject'],
@@ -62,7 +63,8 @@ class SmtpMailingService(IMailingService):
             smtp = smtplib.SMTP(email_host, email_port)
             smtp.send_message(message)
             smtp.quit()
-            self.__logger.info("Email sent")
         except smtplib.SMTPException as e:
             self.__logger.error(str(e))
             raise EmailSendingException(email_host, email_port, message.as_string(), str(e))
+
+        self.__logger.info("Email sent")
