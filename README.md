@@ -1,6 +1,6 @@
-# hdc3a-dlq-handler-service
+# dais-dlq-handler-service
 
-HDC3A DLQ Handler Service (HDHS) is a Python/Flask project written in Python 3 with the goal of handling messages that land in the DLQ for the HDC3A project.
+DAIS DLQ Handler Service (DDHS) is a Python/Flask project written in Python 3 with the goal of handling messages that land in the DLQ.
 
 ## Development environment setup
 
@@ -12,7 +12,7 @@ Create an .env file by copying the existing env.example file from the repository
 
 HDHS is intended to be executed in a Docker container, so it has its own Docker Image, which is defined within this repository in a Dockerfile.
 
-To run an HDHS development container on the local machine, there are two supported options: do it using docker-compose-dev.yml file available in the repository, or using Docker commands.
+To run an DDHS development container on the local machine, there are two supported options: do it using docker-compose-dev.yml file available in the repository, or using Docker commands.
 
 By using docker-compose-dev.yml, docker-compose will also bring up two ActiveMQ development containers. If you want to use remote MQ instances, all you have to do is to update the corresponding MQ environment variables in the .env file to access the desired MQ instances.
 
@@ -27,9 +27,9 @@ docker-compose -f docker-compose-dev.yml up
 
 #### Run using Docker commands
 
-Note that this option will only run an HDHS container, without ActiveMQ containers.
+Note that this option will only run an DDHS container, without ActiveMQ containers.
 
-First, build HDHS Docker image:
+First, build DDHS Docker image:
 ````
 docker build --tag hdhs .
 ````
