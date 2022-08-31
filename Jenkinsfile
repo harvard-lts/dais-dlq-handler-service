@@ -7,4 +7,4 @@
 // default values: slackChannel = "lts-jenkins-notifications"
 
 def endpoints = []
-ltsBasicPipeline.call("dais-dlq", "DAIS", "hdc3a", "10582", endpoints, "lts-epadd")
+ltsBasicPipeline.call("dais-dlq", "DAIS", "hdc3a", "10582", endpoints, "hdc-3a")
