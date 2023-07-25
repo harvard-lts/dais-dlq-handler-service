@@ -1,9 +1,9 @@
 from app.common.domain.mailing.email import Email
 from app.common.infrastructure.mailing.smtp_mailing_service import SmtpMailingService
-from test.integration.integration_test_base import IntegrationTestBase
+from unittest import TestCase
 
 
-class TestSmtpMailingService(IntegrationTestBase):
+class TestSmtpMailingService(TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
